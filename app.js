@@ -36,10 +36,11 @@ const todoInput = document.querySelector("#todoInput");
 const dateDueInput = document.querySelector("#dateInput");
 const addButton = document.querySelector("#addTodoButton");
 const todoList = document.querySelector("#todoList");
+const filterSelect = document.querySelector("#filterSelect");
 
 window.onload = () => {
 	// Initialize the todo list from localStorage
-	renderTodos();
+	renderTodos(todos);
 };
 
 const todos = localStorage.getItem("todos")
@@ -50,7 +51,7 @@ const todos = localStorage.getItem("todos")
 	: [];
 
 //Render existing todos from localStorage
-function renderTodos() {
+function renderTodos(todos) {
 	console.log(todos);
 	let html = "";
 	todos.forEach((todo) => {
@@ -234,3 +235,17 @@ function createTodo(todo) {
 	localStorage.setItem("todos", JSON.stringify(todos));
 	location.reload();
 }
+
+// Filter todos based on completion status
+filterSelect.addEventListener("change", () => {
+	const filterValue = filterSelect.value;
+	let filteredTodos = todos;
+
+	if (filterValue === "completed") {
+		filteredTodos = todos.filter((todo) => todo.completed);
+	} else if (filterValue === "pending") {
+		filteredTodos = todos.filter((todo) => !todo.completed);
+	}
+
+	renderTodos(filteredTodos);
+});
