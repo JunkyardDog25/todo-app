@@ -1,71 +1,66 @@
-class TodoItem {
-	static #id = 1;
-
-	constructor(text, dateDue = null) {
-		this.id = TodoItem.#id++;
-		this.text = text;
-		this.completed = false;
-		this.dateDue = dateDue;
-	}
-
-	getId() {
-		return this.id;
-	}
-	getText() {
-		return this.text;
-	}
-	getCompleted() {
-		return this.completed;
-	}
-	getDateDue() {
-		return this.dateDue;
-	}
-
-	setText(text) {
-		this.text = text;
-	}
-	setCompleted(completed) {
-		this.completed = completed;
-	}
-	setDateDue(dateDue) {
-		this.dateDue = dateDue;
-	}
-}
+import { TodoItem } from "./TodoItem.js";
 
 const todoInput = document.querySelector("#todoInput");
-const dateDueInput = document.querySelector("#dateInput");
+const prioritySelect = document.querySelector("#prioritySelect");
 const addButton = document.querySelector("#addTodoButton");
-const todoList = document.querySelector("#todoList");
 const filterSelect = document.querySelector("#filterSelect");
+
+const todos = localStorage.getItem("todos")
+	? JSON.parse(localStorage.getItem("todos"))
+	: [];
 
 window.onload = () => {
 	// Initialize the todo list from localStorage
 	renderTodos(todos);
 };
 
-const todos = localStorage.getItem("todos")
-	? JSON.parse(localStorage.getItem("todos")).map((todo) => ({
-			...todo,
-			dateDue: todo.dateDue ? new Date(todo.dateDue) : null,
-	  }))
-	: [];
+// Event listener for adding a new todo item
+addButton.addEventListener("click", () => {
+	const todoText = todoInput.value.trim();
+	const priority = prioritySelect.value;
+
+	// Validate input
+	if (!todoText) {
+		alert("Please enter a todo item.");
+		return;
+	}
+
+	// Create a new TodoItem and add it to the list
+	const todoItem = new TodoItem(todoText, priority);
+	createTodo(todoItem);
+});
+
+// Filter todos based on completion status
+filterSelect.addEventListener("change", () => {
+	const filterValue = filterSelect.value;
+	let filteredTodos = todos;
+
+	if (filterValue === "completed") {
+		filteredTodos = todos.filter((todo) => todo.completed);
+	} else if (filterValue === "pending") {
+		filteredTodos = todos.filter((todo) => !todo.completed);
+	}
+
+	renderTodos(filteredTodos);
+});
 
 //Render existing todos from localStorage
 function renderTodos(todos) {
-	console.log(todos);
 	let html = "";
 	todos.forEach((todo) => {
-		html += `<div class="todo">
+		html += `
+		<div class="todo">
 			<div class="input">
 				<textarea disabled>${todo.text}</textarea>
 				
-				${
-					todo.dateDue
-						? `<span>Due:</span> <input disabled class="date-input" type="date" value="${
-								todo.dateDue.toISOString().split("T")[0]
-						  }"/>`
-						: `<input class="edit-date-input" type="date"/>`
-				}
+				Priority:
+				<select class="priority-select" disabled>
+					<option value="low" ${todo.priority === "low" ? "selected" : ""}>Low</option>
+					<option value="medium" ${
+						todo.priority === "medium" ? "selected" : ""
+					}>Medium</option>
+					<option value="high" ${todo.priority === "high" ? "selected" : ""}>High</option>
+				</select>
 				<div class="edit">
 					<i style="cursor: pointer;" class="bi bi-trash-fill"></i>
 					<i style="cursor: pointer;" class="bi bi-pencil-fill"></i>
@@ -113,20 +108,13 @@ function activateEditButtons() {
 	const editButtons = document.querySelectorAll(".bi-pencil-fill");
 	const updateSections = document.querySelectorAll(".update");
 	const inputAreas = document.querySelectorAll(".input textarea");
-	const dateInputs = document.querySelectorAll(".input .date-input");
-	const editDateInputs = document.querySelectorAll(".input .edit-date-input");
+	const prioritySelects = document.querySelectorAll(".input .priority-select");
 
 	editButtons.forEach((button, i) => {
 		button.addEventListener("click", () => {
 			updateSections[i].style.display = "block";
 			inputAreas[i].disabled = false;
-			if (dateInputs[i]) {
-				dateInputs[i].disabled = false;
-			} else {
-				if (editDateInputs[i]) {
-					editDateInputs[i].style.display = "block";
-				}
-			}
+			prioritySelects[i].disabled = false;
 		});
 	});
 }
@@ -135,35 +123,22 @@ function activateEditButtons() {
 function activateSaveButtons() {
 	const saveButtons = document.querySelectorAll(".saveBtn");
 	const inputAreas = document.querySelectorAll(".input textarea");
-	const dateInputs = document.querySelectorAll(".input .date-input");
-	const editDateInputs = document.querySelectorAll(".input .edit-date-input");
+	const prioritySelects = document.querySelectorAll(".input .priority-select");
 
 	saveButtons.forEach((button, i) => {
 		button.addEventListener("click", () => {
 			const updatedText = inputAreas[i].value.trim();
-			console.log(dateInputs[i]);
+			console.log(prioritySelects[i]);
 
-			const updatedDate = dateInputs[i] ? new Date(dateInputs[i].value) : null;
+			const updatedPriority = prioritySelects[i].value;
 			// Validate input
 			if (!updatedText) {
 				alert("Please enter a todo item.");
 				return;
 			}
-			// Check if the due date is in the past
-			if (updatedDate && updatedDate < new Date()) {
-				alert("Please enter a due date in the future.");
-				return;
-			}
-
-			if (!updatedDate) {
-				if (editDateInputs[i]) {
-					todos[i].dateDue = editDateInputs[i].value;
-				}
-			} else {
-				todos[i].dateDue = updatedDate;
-			}
 
 			todos[i].text = updatedText;
+			todos[i].priority = updatedPriority;
 			localStorage.setItem("todos", JSON.stringify(todos));
 			location.reload();
 		});
@@ -175,43 +150,16 @@ function activateCancelButtons() {
 	const cancelButtons = document.querySelectorAll(".cancelBtn");
 	const updateSections = document.querySelectorAll(".update");
 	const inputAreas = document.querySelectorAll(".input textarea");
-	const dateInputs = document.querySelectorAll(".input .date-input");
-	const editDateInputs = document.querySelectorAll(".input .edit-date-input");
+	const prioritySelects = document.querySelectorAll(".input .priority-select");
 
 	cancelButtons.forEach((button, i) => {
 		button.addEventListener("click", () => {
 			updateSections[i].style.display = "none";
 			inputAreas[i].disabled = true;
-			if (dateInputs[i]) {
-				dateInputs[i].disabled = true;
-			}
-			if (editDateInputs[i]) {
-				editDateInputs[i].style.display = "none";
-			}
+			prioritySelects[i].disabled = true;
 		});
 	});
 }
-
-// Event listener for adding a new todo item
-addButton.addEventListener("click", () => {
-	const todoText = todoInput.value.trim();
-	const dateDue = dateDueInput.value ? new Date(dateDueInput.value) : null;
-
-	// Validate input
-	if (!todoText) {
-		alert("Please enter a todo item.");
-		return;
-	}
-	// Check if the due date is in the past
-	if (dateDue && dateDue < new Date()) {
-		alert("Please enter a due date in the future.");
-		return;
-	}
-
-	// Create a new TodoItem and add it to the list
-	const todoItem = new TodoItem(todoText, dateDue);
-	createTodo(todoItem);
-});
 
 // Activate completion buttons
 function activateCompletionButtons() {
@@ -235,17 +183,3 @@ function createTodo(todo) {
 	localStorage.setItem("todos", JSON.stringify(todos));
 	location.reload();
 }
-
-// Filter todos based on completion status
-filterSelect.addEventListener("change", () => {
-	const filterValue = filterSelect.value;
-	let filteredTodos = todos;
-
-	if (filterValue === "completed") {
-		filteredTodos = todos.filter((todo) => todo.completed);
-	} else if (filterValue === "pending") {
-		filteredTodos = todos.filter((todo) => !todo.completed);
-	}
-
-	renderTodos(filteredTodos);
-});

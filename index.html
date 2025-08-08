@@ -18,7 +18,12 @@
 		<h1>Todo App</h1>
 		<div id="form-container">
 			<input type="text" id="todoInput" placeholder="Add a new todo" />
-			<input type="date" id="dateInput" />
+
+			<select name="priority" id="prioritySelect">
+				<option value="low">Low</option>
+				<option value="medium">Medium</option>
+				<option value="high">High</option>
+			</select>
 			<button class="btn btn-primary" id="addTodoButton">Add</button>
 			<select id="filterSelect">
 				<option value="all">All</option>
@@ -28,7 +33,7 @@
 		</div>
 		<div id="list-container"></div>
 
-		<script src="app.js"></script>
+		<script type="module" src="app.js"></script>
 		<script
 			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
 			integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
